@@ -13,8 +13,10 @@ scaler = joblib.load(os.path.join(ARTIFACTS_DIR, "scaler.pkl"))
 
 X_test, y_test = [], []
 
-for label, cls in enumerate(["bad", "good"]):
+for cls in ["0", "1"]:
     folder = os.path.join(DATASET_DIR, "test", cls)
+    label = int(cls)
+
     for img in os.listdir(folder):
         try:
             feat = extract_features(os.path.join(folder, img))
@@ -26,9 +28,9 @@ for label, cls in enumerate(["bad", "good"]):
 X_test = scaler.transform(np.array(X_test))
 y_test = np.array(y_test)
 
-test_pred = model.predict(X_test)
+pred = model.predict(X_test)
 
 print("\n📊 TEST RESULTS (FINAL)")
-print("Accuracy:", accuracy_score(y_test, test_pred))
-print(classification_report(y_test, test_pred))
-print("Confusion Matrix:\n", confusion_matrix(y_test, test_pred))
+print("Accuracy:", accuracy_score(y_test, pred))
+print(classification_report(y_test, pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, pred))

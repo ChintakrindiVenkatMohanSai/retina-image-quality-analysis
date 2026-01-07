@@ -13,16 +13,31 @@ def extract_features(image_path):
 
     features = []
 
-    features += [np.mean(gray), np.std(gray), np.var(gray)]
+    # Statistical features
+    features.extend([
+        np.mean(gray),
+        np.std(gray),
+        np.var(gray)
+    ])
 
-    glcm = graycomatrix(gray, [1], [0], 256, symmetric=True, normed=True)
-    features += [
+    # GLCM texture features
+    glcm = graycomatrix(
+        gray,
+        distances=[1],
+        angles=[0],
+        levels=256,
+        symmetric=True,
+        normed=True
+    )
+
+    features.extend([
         graycoprops(glcm, 'contrast')[0, 0],
         graycoprops(glcm, 'energy')[0, 0],
         graycoprops(glcm, 'homogeneity')[0, 0],
         graycoprops(glcm, 'correlation')[0, 0]
-    ]
+    ])
 
+    # Blur / edge feature
     features.append(np.mean(sobel(gray)))
 
     return np.array(features).reshape(1, -1)

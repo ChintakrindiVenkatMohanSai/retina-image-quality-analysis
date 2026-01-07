@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Retinal Image Quality Assessment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg,#020617,#020617);
+    font-family: "Segoe UI", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 20px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 25px;
+    width: 95%;
+    max-width: 950px;
+    backdrop-filter: blur(14px);
+}
+
+.left, .right {
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/* IMAGE PREVIEW */
+.preview-box {
+    border: 2px dashed rgba(255,255,255,0.3);
+    border-radius: 12px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-box img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 10px;
+}
+
+input[type=file] {
+    margin-top: 15px;
+    width: 100%;
+}
+
+button {
+    margin-top: 15px;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg,#4f46e5,#06b6d4);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* PIPELINE */
+.pipeline-step {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.08);
+    font-size: 14px;
+}
+
+.status {
+    font-weight: 600;
+}
+
+.pending { color: #94a3b8; }
+.running { color: #38bdf8; }
+.done { color: #4ade80; }
+.failed { color: #f87171; }
+
+.result-box {
+    margin-top: 15px;
+    background: rgba(0,0,0,0.35);
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- LEFT PANEL -->
+    <div class="left">
+        <h3>Input Retinal Image</h3>
+
+        <div class="preview-box">
+            <img id="previewImg" style="display:none;">
+            <span id="placeholder">Upload Retinal Image</span>
+        </div>
+
+        <input type="file" id="imageInput" accept="image/*">
+        <button id="runBtn" onclick="runAnalysis()">Run Quality Analysis</button>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right">
+        <h3>Processing Pipeline</h3>
+
+        <div class="pipeline-step">
+            Image Upload
+            <span id="s1" class="status pending">Pending</span>
+        </div>
+
+        <div class="pipeline-step">
+            Feature Extraction
+            <span id="s2" class="status pending">Pending</span>
+        </div>
+
+        <div class="pipeline-step">
+            ML Model Inference
+            <span id="s3" class="status pending">Pending</span>
+        </div>
+
+        <div class="pipeline-step">
+            Quality Decision
+            <span id="s4" class="status pending">Pending</span>
+        </div>
+
+        <div class="result-box" id="resultBox">—</div>
+    </div>
+
+</div>
+
+<script>
+const input = document.getElementById("imageInput");
+const preview = document.getElementById("previewImg");
+const placeholder = document.getElementById("placeholder");
+const runBtn = document.getElementById("runBtn");
+
+input.addEventListener("change", () => {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            preview.src = e.target.result;
+            preview.style.display = "block";
+            placeholder.style.display = "none";
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function setStatus(id, text, cls) {
+    const el = document.getElementById(id);
+    el.innerText = text;
+    el.className = "status " + cls;
+}
+
+function resetPipeline() {
+    setStatus("s1","Pending","pending");
+    setStatus("s2","Pending","pending");
+    setStatus("s3","Pending","pending");
+    setStatus("s4","Pending","pending");
+    document.getElementById("resultBox").innerText = "—";
+}
+
+function runAnalysis() {
+    if (!input.files.length) {
+        alert("Please upload an image");
+        return;
+    }
+
+    runBtn.disabled = true;
+    resetPipeline();
+
+    const formData = new FormData();
+    formData.append("image", input.files[0]);
+
+    // STEP 1: Upload
+    setStatus("s1","Running...","running");
+
+    setTimeout(() => {
+        setStatus("s1","Done","done");
+
+        // STEP 2: Feature Extraction
+        setStatus("s2","Running...","running");
+
+        setTimeout(() => {
+            setStatus("s2","Done","done");
+
+            // STEP 3: ML Model Inference
+            setStatus("s3","Running...","running");
+
+            fetch("/predict", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                // STOP ML MODEL STATUS
+                setStatus("s3","Done","done");
+
+                // STEP 4: Output
+                setStatus("s4","Done","done");
+
+                document.getElementById("resultBox").innerText =
+                    data.result + " | Confidence: " + data.confidence + "%";
+            })
+            .catch(() => {
+                setStatus("s3","Failed","failed");
+                setStatus("s4","Failed","failed");
+                document.getElementById("resultBox").innerText =
+                    "Error during model inference";
+            })
+            .finally(() => {
+                runBtn.disabled = false;
+            });
+
+        }, 700);
+    }, 400);
+}
+</script>
+
+</body>
+</html>
