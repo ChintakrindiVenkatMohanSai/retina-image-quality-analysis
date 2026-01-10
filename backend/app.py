@@ -1,46 +1,102 @@
-from flask import Flask, request, jsonify, render_template
 import os
 import joblib
-import numpy as np
+from flask import Flask, render_template, request, send_from_directory
 from feature_extraction import extract_features
 
-app = Flask(__name__, template_folder="templates")
+app = Flask(__name__)
 
+# =========================
+# PATH SETUP
+# =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ARTIFACTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "artifacts"))
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+ARTIFACTS_DIR = os.path.join(BASE_DIR, "artifacts")
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-model = joblib.load(os.path.join(ARTIFACTS_DIR, "quality_model.pkl"))
-scaler = joblib.load(os.path.join(ARTIFACTS_DIR, "scaler.pkl"))
+# =========================
+# LOAD MODEL
+# =========================
+MODEL_NAME = "Logistic Regression (RFE – 15 Quality Features)"
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+MODEL_PATH = os.path.join(
+    ARTIFACTS_DIR,
+    "logreg_rfe_best_by_test.pkl"
+)
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+print("Loading model from:", MODEL_PATH)
+model = joblib.load(MODEL_PATH)
 
-    file = request.files["image"]
-    image_path = os.path.join(UPLOAD_DIR, file.filename)
-    file.save(image_path)
+# =========================
+# FEATURE NAMES (ORDER MATTERS)
+# =========================
+FEATURE_NAMES = [
+    "Mean", "Std", "Skewness", "Entropy", "Median",
+    "Contrast_0", "Correlation_0", "Homogeneity_0",
+    "Contrast_45", "Energy_45", "Homogeneity_45",
+    "Energy_90", "Homogeneity_90",
+    "Contrast_135", "Homogeneity_135"
+]
 
-    features = extract_features(image_path)
-    features = scaler.transform(features)
+# =========================
+# ROUTES
+# =========================
+@app.route("/", methods=["GET", "POST"])
+def index():
+    result = None
+    confidence = None
+    image_url = None
+    extracted_features = None
 
-    pred = model.predict(features)[0]
-    prob = model.predict_proba(features)[0]
+    if request.method == "POST":
+        file = request.files.get("image")
 
-    result = "GOOD QUALITY IMAGE" if pred == 1 else "BAD QUALITY IMAGE"
-    confidence = round(float(np.max(prob)) * 100, 2)
+        if file and file.filename != "":
+            filename = file.filename
+            image_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(image_path)
 
-    return jsonify({
-        "result": result,
-        "confidence": confidence
-    })
+            # -------------------------
+            # FEATURE EXTRACTION
+            # -------------------------
+            features = extract_features(image_path)
 
+            # -------------------------
+            # MODEL INFERENCE
+            # -------------------------
+            prediction = model.predict(features)[0]
+            probability = model.predict_proba(features)[0, 1] * 100
+
+            result = "GOOD QUALITY IMAGE" if prediction == 1 else "BAD QUALITY IMAGE"
+            confidence = round(probability, 2)
+
+            # -------------------------
+            # SEND IMAGE & FEATURES TO UI
+            # -------------------------
+            image_url = f"/uploads/{filename}"
+
+            extracted_features = dict(
+                zip(FEATURE_NAMES, features.flatten().round(4))
+            )
+
+    return render_template(
+        "index.html",
+        result=result,
+        confidence=confidence,
+        image_url=image_url,
+        extracted_features=extracted_features,
+        model_name=MODEL_NAME
+    )
+
+# =========================
+# SERVE UPLOADED IMAGES
+# =========================
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+# =========================
+# RUN APP
+# =========================
 if __name__ == "__main__":
     app.run(debug=True)

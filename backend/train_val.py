@@ -1,15 +1,24 @@
 import os
 import numpy as np
-from feature_extraction import extract_features
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import joblib
 
+from feature_extraction import extract_features
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import RFE
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# --------------------------------------------------
+# PATHS
+# --------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "dataset"))
 ARTIFACTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "artifacts"))
 
+# --------------------------------------------------
+# LOAD DATA FROM IMAGE FOLDERS
+# --------------------------------------------------
 def load_data(split):
     X, y = [], []
     split_dir = os.path.join(DATASET_DIR, split)
@@ -17,8 +26,7 @@ def load_data(split):
     if not os.path.exists(split_dir):
         raise FileNotFoundError(f"Split folder not found: {split_dir}")
 
-    print(f"\nScanning: {split_dir}")
-    print("Found classes:", os.listdir(split_dir))
+    print(f"\n📂 Scanning: {split_dir}")
 
     for cls in ["0", "1"]:   # 0 = bad, 1 = good
         folder = os.path.join(split_dir, cls)
@@ -30,37 +38,60 @@ def load_data(split):
         for img in os.listdir(folder):
             img_path = os.path.join(folder, img)
             try:
-                feat = extract_features(img_path)
-                X.append(feat.flatten())
+                features = extract_features(img_path)
+                X.append(features.flatten())
                 y.append(label)
             except Exception as e:
-                print("Skipping:", img_path, e)
+                print("⚠ Skipping:", img_path, e)
 
     return np.array(X), np.array(y)
 
-# ---------------- TRAIN ----------------
+# --------------------------------------------------
+# TRAIN + VALIDATION
+# --------------------------------------------------
+print("\n🚀 Loading training data...")
 X_train, y_train = load_data("train")
 
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-
-model = RandomForestClassifier(n_estimators=200, random_state=42)
-model.fit(X_train, y_train)
-
-# ---------------- VALIDATION ----------------
+print("\n🚀 Loading validation data...")
 X_val, y_val = load_data("validation")
-X_val = scaler.transform(X_val)
 
-val_pred = model.predict(X_val)
+# --------------------------------------------------
+# LOGISTIC REGRESSION + RFE PIPELINE
+# --------------------------------------------------
+logreg = LogisticRegression(
+    C=8.609404067363206,
+    penalty="l2",
+    solver="lbfgs",
+    max_iter=100,
+    random_state=42
+)
+
+pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("rfe", RFE(estimator=logreg, n_features_to_select=15)),
+    ("clf", logreg)
+])
+
+print("\n🧠 Training Logistic Regression (RFE-based)...")
+pipeline.fit(X_train, y_train)
+
+# --------------------------------------------------
+# VALIDATION RESULTS
+# --------------------------------------------------
+val_pred = pipeline.predict(X_val)
 
 print("\n📊 VALIDATION RESULTS")
 print("Accuracy:", accuracy_score(y_val, val_pred))
 print(classification_report(y_val, val_pred))
 print("Confusion Matrix:\n", confusion_matrix(y_val, val_pred))
 
-# ---------------- SAVE MODEL ----------------
+# --------------------------------------------------
+# SAVE MODEL
+# --------------------------------------------------
 os.makedirs(ARTIFACTS_DIR, exist_ok=True)
-joblib.dump(model, os.path.join(ARTIFACTS_DIR, "quality_model.pkl"))
-joblib.dump(scaler, os.path.join(ARTIFACTS_DIR, "scaler.pkl"))
+model_path = os.path.join(ARTIFACTS_DIR, "logreg_rfe_best_by_test.pkl")
 
-print("\n✅ Train + Validation completed. Model saved.")
+joblib.dump(pipeline, model_path)
+
+print(f"\n✅ Model saved successfully at: {model_path}")
+print("✅ Model type: Logistic Regression with RFE")

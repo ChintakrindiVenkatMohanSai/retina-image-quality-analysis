@@ -2,247 +2,319 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Retinal Image Quality Assessment</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retinal Image Quality Assessment</title>
 
 <style>
-body {
-    margin: 0;
-    min-height: 100vh;
-    background: linear-gradient(135deg,#020617,#020617);
-    font-family: "Segoe UI", sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
+:root{
+  --bg:#0f172a;
+  --card:#111827;
+  --panel:#0b1220;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --accent:#6366f1;
+  --good:#22c55e;
+  --bad:#ef4444;
 }
 
-.container {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr;
-    gap: 20px;
-    background: rgba(255,255,255,0.07);
-    border-radius: 20px;
-    padding: 25px;
-    width: 95%;
-    max-width: 950px;
-    backdrop-filter: blur(14px);
+body.light{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --panel:#f9fafb;
+  --text:#111827;
+  --muted:#6b7280;
 }
 
-.left, .right {
-    background: rgba(255,255,255,0.05);
-    border-radius: 16px;
-    padding: 20px;
+*{
+  box-sizing:border-box;
+  font-family:"Segoe UI",system-ui,sans-serif;
 }
 
-h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
+body{
+  margin:0;
+  min-height:100vh;
+  background:linear-gradient(135deg,#1e3a8a,#020617);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  padding:24px;
 }
 
-/* IMAGE PREVIEW */
-.preview-box {
-    border: 2px dashed rgba(255,255,255,0.3);
-    border-radius: 12px;
-    height: 260px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.container{
+  width:100%;
+  max-width:1200px;
+  background:var(--card);
+  border-radius:24px;
+  padding:28px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
 }
 
-.preview-box img {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 10px;
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:24px;
 }
 
-input[type=file] {
-    margin-top: 15px;
-    width: 100%;
+.header h1{
+  margin:0;
+  font-size:30px;
 }
 
-button {
-    margin-top: 15px;
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg,#4f46e5,#06b6d4);
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
+.sub{
+  color:var(--muted);
+  margin-top:6px;
 }
 
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.toggle{
+  cursor:pointer;
+  padding:10px 18px;
+  border-radius:20px;
+  background:#334155;
+  font-size:13px;
 }
 
-/* PIPELINE */
-.pipeline-step {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 15px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    background: rgba(255,255,255,0.08);
-    font-size: 14px;
+/* MAIN GRID */
+.main{
+  display:grid;
+  grid-template-columns:1.1fr 1.4fr;
+  gap:26px;
 }
 
-.status {
-    font-weight: 600;
+@media(max-width:900px){
+  .main{grid-template-columns:1fr}
 }
 
-.pending { color: #94a3b8; }
-.running { color: #38bdf8; }
-.done { color: #4ade80; }
-.failed { color: #f87171; }
+/* PANELS */
+.panel{
+  background:var(--panel);
+  border-radius:20px;
+  padding:22px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
 
-.result-box {
-    margin-top: 15px;
-    background: rgba(0,0,0,0.35);
-    padding: 15px;
-    border-radius: 12px;
-    text-align: center;
-    font-size: 18px;
+.panel-title{
+  font-size:18px;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid #334155;
+}
+
+/* LEFT PANEL */
+.upload-box{
+  border:2px dashed #475569;
+  border-radius:18px;
+  padding:22px;
+  text-align:center;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.upload-box:hover{
+  border-color:var(--accent);
+  background:rgba(99,102,241,.08);
+}
+
+.upload-box input{display:none}
+
+.preview{
+  display:flex;
+  justify-content:center;
+}
+
+.preview img{
+  max-width:260px;
+  max-height:260px;
+  object-fit:contain;
+  border-radius:14px;
+  background:#000;
+  box-shadow:0 14px 30px rgba(0,0,0,.45);
+}
+
+button{
+  margin-top:auto;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:600;
+  background:linear-gradient(135deg,#6366f1,#4f46e5);
+  color:white;
+  cursor:pointer;
+  transition:.3s;
+}
+
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(99,102,241,.5);
+}
+
+/* RIGHT PANEL */
+.pipeline{
+  display:grid;
+  gap:12px;
+}
+
+.step{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 16px;
+  border-radius:14px;
+  background:#1f2937;
+  font-size:14px;
+}
+
+.done{color:var(--good)}
+.pending{color:var(--muted)}
+
+.result-box{
+  padding:18px;
+  border-radius:16px;
+  text-align:center;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:.03em;
+}
+
+.good{background:rgba(34,197,94,.15);color:var(--good)}
+.bad{background:rgba(239,68,68,.15);color:var(--bad)}
+
+/* MODEL HIGHLIGHT */
+.model-highlight{
+  margin-top:8px;
+  padding:14px 16px;
+  border-radius:14px;
+  background:linear-gradient(
+    135deg,
+    rgba(99,102,241,.18),
+    rgba(99,102,241,.05)
+  );
+  border:1px solid rgba(99,102,241,.45);
+}
+
+.model-label{
+  display:block;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#a5b4fc;
+  margin-bottom:4px;
+}
+
+.model-name{
+  font-size:15px;
+  font-weight:600;
+}
+
+/* FEATURES TABLE */
+.features h4{
+  margin:12px 0 6px;
+}
+
+.features table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.features td{
+  padding:8px 10px;
+  font-size:13px;
+  border-bottom:1px solid #334155;
+}
+
+.features td:first-child{
+  color:var(--muted);
+  width:55%;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
-    <!-- LEFT PANEL -->
-    <div class="left">
-        <h3>Input Retinal Image</h3>
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <h1>Retinal Image Quality</h1>
+      <div class="sub">AI-based retinal image assessment</div>
+    </div>
+    <div class="toggle" onclick="toggleTheme()">Theme</div>
+  </div>
 
-        <div class="preview-box">
+  <form method="POST" enctype="multipart/form-data">
+    <div class="main">
+
+      <!-- LEFT PANEL -->
+      <div class="panel">
+        <h3 class="panel-title">Input Retinal Image</h3>
+
+        <label class="upload-box">
+          📤 Click to upload retinal image
+          <input type="file" name="image" accept="image/*" required onchange="previewImage(event)">
+        </label>
+
+        <div class="preview">
+          {% if image_url %}
+            <img src="{{ image_url }}">
+          {% else %}
             <img id="previewImg" style="display:none;">
-            <span id="placeholder">Upload Retinal Image</span>
+          {% endif %}
         </div>
 
-        <input type="file" id="imageInput" accept="image/*">
-        <button id="runBtn" onclick="runAnalysis()">Run Quality Analysis</button>
+        <button type="submit">Run Quality Analysis</button>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="panel">
+        <h3 class="panel-title">Processing Pipeline</h3>
+
+        <div class="pipeline">
+          <div class="step">Image Upload <span class="done">Done</span></div>
+          <div class="step">Feature Extraction <span class="{{ 'done' if result else 'pending' }}">{{ 'Done' if result else 'Pending' }}</span></div>
+          <div class="step">ML Model Inference <span class="{{ 'done' if result else 'pending' }}">{{ 'Done' if result else 'Pending' }}</span></div>
+          <div class="step">Quality Decision <span class="{{ 'done' if result else 'pending' }}">{{ 'Done' if result else 'Pending' }}</span></div>
+        </div>
+
+        {% if result %}
+          <div class="result-box {{ 'good' if 'GOOD' in result else 'bad' }}">
+            {{ result }}
+          </div>
+
+          <div class="model-highlight">
+            <span class="model-label">Model Used</span>
+            <span class="model-name">{{ model_name }}</span>
+          </div>
+
+          <div class="features">
+            <h4>Extracted Features</h4>
+            <table>
+              {% for k,v in extracted_features.items() %}
+                <tr>
+                  <td>{{ k }}</td>
+                  <td>{{ v }}</td>
+                </tr>
+              {% endfor %}
+            </table>
+          </div>
+        {% endif %}
+      </div>
+
     </div>
-
-    <!-- RIGHT PANEL -->
-    <div class="right">
-        <h3>Processing Pipeline</h3>
-
-        <div class="pipeline-step">
-            Image Upload
-            <span id="s1" class="status pending">Pending</span>
-        </div>
-
-        <div class="pipeline-step">
-            Feature Extraction
-            <span id="s2" class="status pending">Pending</span>
-        </div>
-
-        <div class="pipeline-step">
-            ML Model Inference
-            <span id="s3" class="status pending">Pending</span>
-        </div>
-
-        <div class="pipeline-step">
-            Quality Decision
-            <span id="s4" class="status pending">Pending</span>
-        </div>
-
-        <div class="result-box" id="resultBox">—</div>
-    </div>
-
+  </form>
 </div>
 
 <script>
-const input = document.getElementById("imageInput");
-const preview = document.getElementById("previewImg");
-const placeholder = document.getElementById("placeholder");
-const runBtn = document.getElementById("runBtn");
-
-input.addEventListener("change", () => {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            preview.src = e.target.result;
-            preview.style.display = "block";
-            placeholder.style.display = "none";
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-function setStatus(id, text, cls) {
-    const el = document.getElementById(id);
-    el.innerText = text;
-    el.className = "status " + cls;
+function previewImage(e){
+  const img=document.getElementById("previewImg");
+  img.src=URL.createObjectURL(e.target.files[0]);
+  img.style.display="block";
 }
 
-function resetPipeline() {
-    setStatus("s1","Pending","pending");
-    setStatus("s2","Pending","pending");
-    setStatus("s3","Pending","pending");
-    setStatus("s4","Pending","pending");
-    document.getElementById("resultBox").innerText = "—";
-}
-
-function runAnalysis() {
-    if (!input.files.length) {
-        alert("Please upload an image");
-        return;
-    }
-
-    runBtn.disabled = true;
-    resetPipeline();
-
-    const formData = new FormData();
-    formData.append("image", input.files[0]);
-
-    // STEP 1: Upload
-    setStatus("s1","Running...","running");
-
-    setTimeout(() => {
-        setStatus("s1","Done","done");
-
-        // STEP 2: Feature Extraction
-        setStatus("s2","Running...","running");
-
-        setTimeout(() => {
-            setStatus("s2","Done","done");
-
-            // STEP 3: ML Model Inference
-            setStatus("s3","Running...","running");
-
-            fetch("/predict", {
-                method: "POST",
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                // STOP ML MODEL STATUS
-                setStatus("s3","Done","done");
-
-                // STEP 4: Output
-                setStatus("s4","Done","done");
-
-                document.getElementById("resultBox").innerText =
-                    data.result + " | Confidence: " + data.confidence + "%";
-            })
-            .catch(() => {
-                setStatus("s3","Failed","failed");
-                setStatus("s4","Failed","failed");
-                document.getElementById("resultBox").innerText =
-                    "Error during model inference";
-            })
-            .finally(() => {
-                runBtn.disabled = false;
-            });
-
-        }, 700);
-    }, 400);
+function toggleTheme(){
+  document.body.classList.toggle("light");
 }
 </script>
 

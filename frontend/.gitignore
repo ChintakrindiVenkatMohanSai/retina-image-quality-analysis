@@ -1,0 +1,24 @@
+# =========================
+# Python
+# =========================
+venv/
+__pycache__/
+*.pyc
+
+# =========================
+# ML Artifacts (generated)
+# =========================
+artifacts/
+backend/uploads/
+
+# =========================
+# Dataset (large files)
+# =========================
+dataset/
+
+# =========================
+# OS / Editor files
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
