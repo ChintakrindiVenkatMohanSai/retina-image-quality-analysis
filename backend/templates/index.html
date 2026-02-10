@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retinal Image Quality Assessment</title>
+
+<style>
+:root{
+  --bg:#0f172a;
+  --card:#111827;
+  --panel:#0b1220;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --accent:#6366f1;
+  --border:#334155;
+}
+
+body.light{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --panel:#f9fafb;
+  --text:#111827;
+  --muted:#6b7280;
+  --border:#d1d5db;
+}
+
+*{
+  box-sizing:border-box;
+  font-family:"Segoe UI",system-ui,sans-serif;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:linear-gradient(135deg,#1e3a8a,#020617);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  padding:24px;
+}
+
+.container{
+  width:100%;
+  max-width:1200px;
+  background:var(--card);
+  border-radius:26px;
+  padding:28px;
+  box-shadow:0 30px 90px rgba(0,0,0,.6);
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:28px;
+}
+
+.header h1{margin:0;font-size:32px;}
+.sub{margin-top:6px;color:var(--muted);}
+
+.toggle{
+  cursor:pointer;
+  padding:10px 18px;
+  border-radius:20px;
+  background:#334155;
+  font-size:13px;
+}
+
+/* GRID */
+.main{
+  display:grid;
+  grid-template-columns:1.1fr 1.4fr;
+  gap:28px;
+}
+
+@media(max-width:900px){
+  .main{grid-template-columns:1fr}
+}
+
+/* PANELS */
+.panel{
+  background:var(--panel);
+  border-radius:22px;
+  padding:22px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.panel-title{
+  font-size:18px;
+  margin:0;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+
+/* UPLOAD */
+.upload-box{
+  border:2px dashed var(--border);
+  border-radius:18px;
+  padding:22px;
+  text-align:center;
+  cursor:pointer;
+}
+
+.upload-box input{display:none}
+
+/* IMAGE */
+.preview{
+  display:flex;
+  justify-content:center;
+}
+
+.preview img{
+  max-width:240px;
+  max-height:240px;
+  object-fit:contain;
+  border-radius:16px;
+  background:black;
+}
+
+/* BUTTON */
+button{
+  margin-top:auto;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:600;
+  background:linear-gradient(135deg,#6366f1,#4f46e5);
+  color:white;
+  cursor:pointer;
+}
+
+/* PIPELINE */
+.pipeline{display:grid;gap:12px;}
+
+.step{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 16px;
+  border-radius:14px;
+  background:#1f2937;
+  font-size:14px;
+}
+
+.done{color:#22c55e}
+.pending{color:var(--muted)}
+
+/* RESULT */
+.result-box{
+  margin-top:10px;
+  padding:18px;
+  border-radius:16px;
+  background:#020617;
+  text-align:center;
+}
+
+.model-highlight{
+  margin-top:12px;
+  padding:14px 16px;
+  border-radius:14px;
+  background:rgba(99,102,241,.12);
+}
+
+.explainability{
+  margin-top:12px;
+  padding:14px 16px;
+  border-radius:14px;
+  background:#020617;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="header">
+<div>
+<h1>Retinal Image Quality</h1>
+<div class="sub">Explainable AI-based retinal image assessment</div>
+</div>
+<div class="toggle" onclick="toggleTheme()">Theme</div>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+<div class="main">
+
+<!-- LEFT PANEL -->
+<div class="panel">
+<h3 class="panel-title">Input Retinal Image</h3>
+
+<label class="upload-box">
+📤 Upload retinal image
+<input type="file" name="image" accept="image/*" required onchange="previewImage(event)">
+</label>
+
+<div class="preview">
+{% if image_url %}
+<img src="{{ image_url }}">
+{% else %}
+<img id="previewImg" style="display:none;">
+{% endif %}
+</div>
+
+<button type="submit">Run Quality Analysis</button>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="panel">
+<h3 class="panel-title">Processing Pipeline</h3>
+
+<div class="pipeline">
+<div class="step">Image Upload <span class="done">Done</span></div>
+<div class="step">Feature Extraction <span class="{{ 'done' if result else 'pending' }}">{{ 'Done' if result else 'Pending' }}</span></div>
+<div class="step">ML Model <span class="{{ 'done' if result else 'pending' }}">{{ 'Done' if result else 'Pending' }}</span></div>
+<div class="step">Decision <span class="{{ 'done' if result else 'pending' }}">{{ 'Done' if result else 'Pending' }}</span></div>
+</div>
+
+{% if result %}
+<div class="result-box">
+<h2>{{ result }}</h2>
+<p><strong>Confidence:</strong> {{ confidence }}%</p>
+</div>
+
+<div class="model-highlight">
+<strong>Model Used:</strong> {{ model_name }}
+</div>
+
+<!-- FEATURE NAMES -->
+{% if extracted_features %}
+<div class="explainability">
+<strong>Extracted Features:</strong>
+<ul>
+{% for feature in extracted_features %}
+<li>{{ feature }}</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+<!-- SHAP EXPLAINABILITY -->
+{% if shap_image %}
+<div class="explainability">
+<strong>Model Explainability (SHAP):</strong>
+<br><br>
+<img src="{{ url_for('static', filename=shap_image) }}"
+     style="max-width:100%; border-radius:14px;">
+</div>
+{% endif %}
+
+{% endif %}
+
+</div>
+</div>
+</form>
+</div>
+
+<script>
+function previewImage(e){
+const img=document.getElementById("previewImg");
+img.src=URL.createObjectURL(e.target.files[0]);
+img.style.display="block";
+}
+
+function toggleTheme(){
+document.body.classList.toggle("light");
+}
+</script>
+
+</body>
+</html>
