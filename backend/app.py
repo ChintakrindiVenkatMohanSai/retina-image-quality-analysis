@@ -70,7 +70,7 @@ def index():
             result = (
                 "GOOD QUALITY IMAGE"
                 if prediction == 1
-                else "LOW QUALITY RETINAL IMAGE"
+                else "BAD QUALITY RETINAL IMAGE"
             )
 
             confidence = round(probability, 2)
