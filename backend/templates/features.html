@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Extracted Features</title>
+
+<style>
+body{
+background:#020617;
+font-family:Segoe UI;
+color:white;
+padding:40px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #334155;
+}
+
+th{
+background:#111827;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Extracted Feature Descriptions</h1>
+
+<table>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+
+{% for k,v in features.items() %}
+<tr>
+<td>{{ k }}</td>
+<td>{{ v }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>
