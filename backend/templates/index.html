@@ -12,6 +12,7 @@ margin:0;
 font-family:Segoe UI, sans-serif;
 background:linear-gradient(135deg,#1e3a8a,#020617);
 color:#e5e7eb;
+overflow-x:hidden;
 }
 
 /* ---------- MAIN CONTAINER ---------- */
@@ -21,18 +22,55 @@ margin:30px auto;
 padding:20px;
 }
 
-/* HEADER */
-h1{
-font-size:46px;
+/* ---------- CIRCULAR TITLE REGION ---------- */
+.title-wrapper{
+display:flex;
+justify-content:center;
+margin-bottom:40px;
+position:relative;
+}
+
+.title-circle{
+width:320px;
+height:320px;
+border-radius:50%;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+position:relative;
+background:rgba(15,23,42,0.8);
+backdrop-filter:blur(10px);
+box-shadow:0 0 60px rgba(99,102,241,0.6);
+animation:float 6s ease-in-out infinite;
+}
+
+/* Rotating glowing border */
+.title-circle::before{
+content:"";
+position:absolute;
+width:340px;
+height:340px;
+border-radius:50%;
+background:conic-gradient(#6366f1,#22d3ee,#6366f1);
+z-index:-1;
+animation:rotate 6s linear infinite;
+filter:blur(20px);
+}
+
+.title-circle h1{
 margin:0;
+font-size:32px;
 }
 
 .sub{
 color:#9ca3af;
-margin-bottom:25px;
+margin-top:8px;
+font-size:14px;
 }
 
-/* ---------- GRID LAYOUT ---------- */
+/* ---------- GRID ---------- */
 .grid{
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -45,15 +83,14 @@ background:#020617;
 padding:25px;
 border-radius:22px;
 box-shadow:0 15px 40px rgba(0,0,0,.6);
+transition:.4s;
+}
+
+.card:hover{
+transform:translateY(-5px);
 }
 
 /* ---------- UPLOAD BOX ---------- */
-.upload-title{
-margin-bottom:15px;
-font-size:22px;
-font-weight:600;
-}
-
 .upload-box{
 display:flex;
 align-items:center;
@@ -64,12 +101,14 @@ padding:35px 20px;
 border-radius:16px;
 cursor:pointer;
 color:#9ca3af;
-transition:.3s;
+transition:.4s;
+animation:pulse 2s infinite;
 }
 
 .upload-box:hover{
 border-color:#6366f1;
 color:#c7d2fe;
+box-shadow:0 0 20px rgba(99,102,241,0.6);
 }
 
 .upload-box input{
@@ -87,18 +126,20 @@ color:white;
 font-size:18px;
 cursor:pointer;
 margin-top:18px;
+transition:.4s;
+}
+
+.analyze-btn:hover{
+transform:scale(1.05);
+box-shadow:0 10px 25px rgba(99,102,241,.6);
 }
 
 /* IMAGE PREVIEW */
-.preview{
-margin-top:20px;
-text-align:center;
-}
-
 .preview img{
 max-width:350px;
 border-radius:15px;
 box-shadow:0 10px 30px rgba(0,0,0,.7);
+animation:fadeIn .8s ease-in-out;
 }
 
 /* ---------- PIPELINE ---------- */
@@ -110,27 +151,61 @@ margin-bottom:14px;
 display:flex;
 justify-content:space-between;
 align-items:center;
+transition:.5s;
+transform:translateX(-20px);
+opacity:0;
+animation:slideIn .8s forwards;
 }
 
-.done{color:#22c55e;}
-.pending{color:#9ca3af;}
+.step:nth-child(1){animation-delay:.2s}
+.step:nth-child(2){animation-delay:.4s}
+.step:nth-child(3){animation-delay:.6s}
+.step:nth-child(4){animation-delay:.8s}
 
-/* FEATURES BUTTON */
-.feature-btn{
-display:inline-block;
-margin-top:12px;
-padding:10px 18px;
-background:#6366f1;
-border-radius:10px;
-color:white;
-text-decoration:none;
+.done{
+color:#22c55e;
+text-shadow:0 0 10px #22c55e;
 }
 
-/* RESULT TEXT */
+.pending{
+color:#9ca3af;
+}
+
+/* RESULT */
 .result{
 margin-top:25px;
 font-size:26px;
 font-weight:700;
+animation:fadeIn 1s ease-in-out;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes rotate{
+0%{transform:rotate(0deg)}
+100%{transform:rotate(360deg)}
+}
+
+@keyframes float{
+0%,100%{transform:translateY(0)}
+50%{transform:translateY(-10px)}
+}
+
+@keyframes pulse{
+0%{box-shadow:0 0 0 rgba(99,102,241,0)}
+50%{box-shadow:0 0 25px rgba(99,102,241,.5)}
+100%{box-shadow:0 0 0 rgba(99,102,241,0)}
+}
+
+@keyframes slideIn{
+to{
+transform:translateX(0);
+opacity:1;
+}
+}
+
+@keyframes fadeIn{
+from{opacity:0}
+to{opacity:1}
 }
 
 </style>
@@ -140,8 +215,13 @@ font-weight:700;
 
 <div class="container">
 
+<!-- 🔵 Circular Title -->
+<div class="title-wrapper">
+<div class="title-circle">
 <h1>Retinal Image Quality</h1>
 <p class="sub">AI-based retinal image quality assessment</p>
+</div>
+</div>
 
 <form method="POST" enctype="multipart/form-data">
 
@@ -150,7 +230,7 @@ font-weight:700;
 <!-- LEFT SIDE -->
 <div class="card">
 
-<h3 class="upload-title">Input Retinal Image</h3>
+<h3>Input Retinal Image</h3>
 
 <label class="upload-box">
 📤 Click to upload retinal image
@@ -160,11 +240,7 @@ font-weight:700;
 <button class="analyze-btn">Run Quality Analysis</button>
 
 <div class="preview">
-{% if image_url %}
-<img src="{{ image_url }}">
-{% else %}
 <img id="imgPreview" style="display:none;">
-{% endif %}
 </div>
 
 </div>
@@ -182,18 +258,7 @@ Image Upload
 </div>
 
 <div class="step">
-<div>
 Feature Extraction
-
-{% if result %}
-<br>
-<a href="/features" target="_self" class="feature-btn">
-View Extracted Features
-</a>
-{% endif %}
-
-</div>
-
 <span class="{{ 'done' if result else 'pending' }}">
 {{ 'Done' if result else 'Pending' }}
 </span>
